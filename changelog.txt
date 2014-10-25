@@ -1,0 +1,23 @@
+
+
+22.10.2012
+Doplnene do MyAgent:
+	konstruktor dostane argumenty sirka, vyska sveta
+V pripade ukoncenia agenta metodou halt(), sa finalna plocha vykresli do screen.png
+
+24.9.2012
+Agent si pocita pocet vykonanych akcii, v pripade, ze v jednom volani metody act() vykonal
+viac ako jednu, nastane vynimka a program sa ukonci. Pribudla metoda halt(), ktora ukonci
+cinnost agenta a na konzolu vypise pocet vykonanych akcii.
+
+
+6.10.2011
+minor bug: odstranena deklaracia premennej net v metode act() v MyAgent.java
+
+27.9.2011
+cerveny ramcek okolo viditelneho perceptu
+
+27.9.2011
+pridal som metodu getOrientation(), ktora vracia 0-3 (funguju konstanty World.NORTH = 0, ... World.WEST = 3)
+Spraveny fog of war. Mozno bude treba este zmenit jas niektorym bitmapam, aby to bolo viditelnejesie.
+Nejake bug fixy: metoda percept pre policko kde stal agent vratil vzdy ze je tam AGENT, aj ked tam bola DIRTY.
