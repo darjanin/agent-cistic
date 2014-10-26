@@ -10,7 +10,7 @@ public  class MyAgent extends Agent{
 	int height, width;
 	State activeState;
 	
-	static final int UNKNOWN = 3;
+	static final int UNKNOWN = 7;
 		
 	public MyAgent(int height, int width) {
 		// initialize the skyNet with dimension 4 times larger than input map with UNKNOWN squares
@@ -25,43 +25,8 @@ public  class MyAgent extends Agent{
 		
 		activeState = new State(this.height/2, this.width/2, World.NORTH, null); 
 	}
-
-	
-	private void skyNetMap() {
-		for (int i = 0; i < this.height; i++) {
-			for (int j = 0; j < this.width; j++) {
-				if (skyNet[i][j] == UNKNOWN)
-					System.out.print(" ");
-				else
-					System.out.print(skyNet[i][j]);
-			}
-			System.out.println("");
-		}
-	}
-	
-	private void netMap(int[][] net) {
-		p(">>> NET");
-		System.out.print(net[getPerceptSize() - 1][getPerceptSize() - 1]);
-		System.out.print(net[getPerceptSize() - 1][getPerceptSize() - 0]);
-		System.out.print(net[getPerceptSize() - 1][getPerceptSize() + 1]);
-		p("");
-		System.out.print(net[getPerceptSize() - 0][getPerceptSize() - 1]);
-		System.out.print(net[getPerceptSize() - 0][getPerceptSize() - 0]);
-		System.out.print(net[getPerceptSize() - 0][getPerceptSize() + 1]);
-		p("");
-		System.out.print(net[getPerceptSize() + 1][getPerceptSize() - 1]);
-		System.out.print(net[getPerceptSize() + 1][getPerceptSize() - 0]);
-		System.out.print(net[getPerceptSize() + 1][getPerceptSize() + 1]);
-		p("");
-	}
-	
-	private void p(String msg) {
-		System.out.println(msg);
-	}
 	
 	private boolean findTarget() {
-//		p("::: FINDING TARGET");
-		
 		LinkedList<State> open = new LinkedList<State>();
 		HashSet<State> close = new HashSet<State>();
 		State state, newState;
@@ -69,9 +34,6 @@ public  class MyAgent extends Agent{
 		open.add(activeState);
 		
 		while(!open.isEmpty()) {
-//			p("======================================");
-//			p("OPEN " + open);
-//			p("CLOSE " + close);
 			state = open.pop();
 			
 			if (!close.contains(state)) {
@@ -79,9 +41,9 @@ public  class MyAgent extends Agent{
 				
 				// if agent stands on DIRTY or UNKNOWN square, generate path to it from active state
 				if (skyNet[state.x][state.y] == DIRTY || skyNet[state.x][state.y] == UNKNOWN) {
-//					p("FOUND DIRTY OR UNKNOWN");
-//					p("STATE FOUND: " + state);
+//					System.out.println("DIRTY or UNKNOWN");
 					path = state.path();
+//					System.out.println(path);
 					return true;
 				}
 				
@@ -126,49 +88,28 @@ public  class MyAgent extends Agent{
 				
 			}
 			
-			
-//			p("OPEN " + open);
-//			p("CLOSE " + close);
-//			p("======================================");
 		}
 		
-		// halt if no target has been found
-//		p("HALTED");
-//		halt();
 		return false;
 		
 	}
-	
-	public void updateSkyNet() {
-//		p(">>> UPDATE SKYNET");
+
+	private void updateSkyNet() {
 		
-		net = percept();	// aktualny percept
-		// zadefinovane su konstanty CLEAN=0, DIRTY=1, WALL=2)
+		int viewDistance = getPerceptSize();
+		net = percept();
 		
-//		netMap(net);
-			
-//		p("LAST USED STATE: " + activeState);
-		
-		skyNet[activeState.x-1][activeState.y-1] = net[getPerceptSize() - 1][getPerceptSize() - 1];
-		skyNet[activeState.x-1][activeState.y] 	 = net[getPerceptSize() - 1][getPerceptSize() + 0];
-		skyNet[activeState.x-1][activeState.y+1] = net[getPerceptSize() - 1][getPerceptSize() + 1];
-		skyNet[activeState.x][activeState.y-1]   = net[getPerceptSize() + 0][getPerceptSize() - 1];
-		skyNet[activeState.x][activeState.y]     = net[getPerceptSize() + 0][getPerceptSize() + 0];
-		skyNet[activeState.x][activeState.y+1] 	 = net[getPerceptSize() + 0][getPerceptSize() + 1];
-		skyNet[activeState.x+1][activeState.y-1] = net[getPerceptSize() + 1][getPerceptSize() - 1];
-		skyNet[activeState.x+1][activeState.y] 	 = net[getPerceptSize() + 1][getPerceptSize() + 0];
-		skyNet[activeState.x+1][activeState.y+1] = net[getPerceptSize() + 1][getPerceptSize() + 1];
-		
-//		skyNetMap();
-//		p("");
+		for (int x = -viewDistance; x <= viewDistance; x++) {
+			for (int y = -viewDistance; y <= viewDistance; y++) {
+				skyNet[activeState.x + x][activeState.y + y] = net[viewDistance + x][viewDistance + y];
+			}
+		}
 	}
 	
 	public void act(){			
 		
-		
 		// if standing on the DIRTY square, than suck
 		if (skyNet[activeState.x][activeState.y] == DIRTY) {
-//			p(">>> SUCK");
 			suck();
 		}
 		
@@ -177,7 +118,6 @@ public  class MyAgent extends Agent{
 		// if there is some order in path than poll last and execute it
 		// return at the end and execute next order in new act call
 		if (path.size() > 0) {
-//			p("||| MOVING: " + path);
 			switch (path.pollLast()) {
 			case "f":
 				boolean allowMove = false;
@@ -222,7 +162,6 @@ public  class MyAgent extends Agent{
 		}
 		
 		if (!findTarget()) {
-//			p("HALTED");
 			halt();
 		}
 		
@@ -244,12 +183,10 @@ public  class MyAgent extends Agent{
 		}
 		
 		public LinkedList<String> path() {
-//			p("=== GENERATE PATH");
 			LinkedList<String> out = new LinkedList<String>();
 			State state = prev;
 			int oldOrientation = orientation;
 			while (state != null) {
-//				p("STATES: " + state);
 				if (oldOrientation != state.orientation) {
 					if (oldOrientation == World.NORTH && state.orientation == World.WEST) {
 						out.add("r");
@@ -267,7 +204,6 @@ public  class MyAgent extends Agent{
 				oldOrientation = state.orientation;
 				state = state.prev;
 			}
-//			p("=== PATH: " + out);
 			return out;
 		}
 		
