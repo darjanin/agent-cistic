@@ -1,5 +1,3 @@
-import java.awt.Point;
-import java.rmi.activation.Activatable;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -12,7 +10,7 @@ public  class MyAgent extends Agent{
 	int height, width;
 	State activeState;
 	
-	static final int UNKNOWN = 7;
+	static final int UNKNOWN = 3;
 		
 	public MyAgent(int height, int width) {
 		// initialize the skyNet with dimension 4 times larger than input map with UNKNOWN squares
@@ -61,7 +59,7 @@ public  class MyAgent extends Agent{
 		System.out.println(msg);
 	}
 	
-	private boolean findTarge() {
+	private boolean findTarget() {
 //		p("::: FINDING TARGET");
 		
 		LinkedList<State> open = new LinkedList<State>();
@@ -82,11 +80,12 @@ public  class MyAgent extends Agent{
 				// if agent stands on DIRTY or UNKNOWN square, generate path to it from active state
 				if (skyNet[state.x][state.y] == DIRTY || skyNet[state.x][state.y] == UNKNOWN) {
 //					p("FOUND DIRTY OR UNKNOWN");
+//					p("STATE FOUND: " + state);
 					path = state.path();
 					return true;
 				}
 				
-				// base on orientation add new state that will move forward
+				// base on orientation add new state that will move the agent forward
 				switch (state.orientation) {
 				case World.NORTH:
 					newState = new State(state.x - 1, state.y, state.orientation, state);
@@ -184,12 +183,12 @@ public  class MyAgent extends Agent{
 				boolean allowMove = false;
 				if (activeState.orientation == World.NORTH && skyNet[activeState.x-1][activeState.y] != WALL)
 					allowMove = true;
-				if (activeState.orientation == World.SOUTH && skyNet[activeState.x+1][activeState.y] != WALL)
+				else if (activeState.orientation == World.SOUTH && skyNet[activeState.x+1][activeState.y] != WALL)
 					allowMove = true;
-				if (activeState.orientation == World.WEST && skyNet[activeState.x][activeState.y-1] != WALL)
+				else if (activeState.orientation == World.WEST && skyNet[activeState.x][activeState.y-1] != WALL)
 					allowMove = true;
-				if (activeState.orientation == World.EAST && skyNet[activeState.x][activeState.y+1] != WALL)
-					allowMove = true;
+				else if (activeState.orientation == World.EAST && skyNet[activeState.x][activeState.y+1] != WALL)
+					allowMove = true; 
 				
 				if (allowMove) {
 					moveFW();
@@ -222,8 +221,8 @@ public  class MyAgent extends Agent{
 			return;
 		}
 		
-		if (!findTarge()) {
-			p("HALTED");
+		if (!findTarget()) {
+//			p("HALTED");
 			halt();
 		}
 		
@@ -250,6 +249,7 @@ public  class MyAgent extends Agent{
 			State state = prev;
 			int oldOrientation = orientation;
 			while (state != null) {
+//				p("STATES: " + state);
 				if (oldOrientation != state.orientation) {
 					if (oldOrientation == World.NORTH && state.orientation == World.WEST) {
 						out.add("r");
