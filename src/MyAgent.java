@@ -7,13 +7,16 @@ public  class MyAgent extends Agent{
 	
 	// skyNet is my map where would be done path-finding
 	int[][] skyNet;
+	// height and width of the skyNet
 	int height, width;
+	// activeState is for handling position of the agent (terminator)
 	State activeState;
-	
+	// constant for UNKOWN squares in skyNet
 	static final int UNKNOWN = 7;
 		
 	public MyAgent(int height, int width) {
 		// initialize the skyNet with dimension 4 times larger than input map with UNKNOWN squares
+		// save this values into height and width
 		this.height = height*4+1;
 		this.width = width*4+1;
 		skyNet = new int[this.height][this.width];
@@ -22,28 +25,35 @@ public  class MyAgent extends Agent{
 				skyNet[i][j] = UNKNOWN;
 			}
 		}
-		
+		// set the position and orientation of the agent in centre of the skyNet looking at the north
 		activeState = new State(this.height/2, this.width/2, World.NORTH, null); 
 	}
 	
+	/**
+	 * it locates prey and gives orders how to move to it's position
+	 * returns true and sets the path variable if finds DIRTY or UNKNOWN square
+	 * return false if there are no accessible DIRTY or UNKNOWN squares 
+	 **/
 	private boolean findTarget() {
+		// open is list where are saved states for visit
 		LinkedList<State> open = new LinkedList<State>();
+		// close is set containing visited states
 		HashSet<State> close = new HashSet<State>();
 		State state, newState;
 		
+		// add to open the active state information from which the movement starts
 		open.add(activeState);
 		
 		while(!open.isEmpty()) {
+			
 			state = open.pop();
 			
 			if (!close.contains(state)) {
 				close.add(state);
 				
-				// if agent stands on DIRTY or UNKNOWN square, generate path to it from active state
+				// if agent stands on DIRTY or UNKNOWN square, generate path to it from activeState
 				if (skyNet[state.x][state.y] == DIRTY || skyNet[state.x][state.y] == UNKNOWN) {
-//					System.out.println("DIRTY or UNKNOWN");
 					path = state.path();
-//					System.out.println(path);
 					return true;
 				}
 				
@@ -65,12 +75,12 @@ public  class MyAgent extends Agent{
 					newState = null;
 				}
 				
-				// if newState is not in closed states and is not wall then add it to the open
+				// if newState is not in closed states and it's not wall then add it to the open
 				if (!close.contains(newState) && skyNet[newState.x][newState.y] != WALL) {
 					open.add(newState);
 				}
 				
-				// rotate to left
+				// rotate to left on the same position
 				if (state.orientation == World.NORTH)
 					newState = new State(state.x, state.y, World.WEST , state);
 				else
@@ -78,7 +88,7 @@ public  class MyAgent extends Agent{
 				if (!close.contains(newState))
 					open.add(newState);
 				
-				// rotate to the right
+				// rotate to the right on the same position
 				if (state.orientation == World.WEST)
 					newState = new State(state.x, state.y, World.NORTH, state);
 				else
@@ -90,15 +100,23 @@ public  class MyAgent extends Agent{
 			
 		}
 		
+		// if open is empty and the locator of DIRTY or UNKNOWN square doesn't return true return false
+		// and the agent movement will be halted
 		return false;
 		
 	}
 
+	/**
+	 * update squares in skyNet with values that were percepted by the agent
+	 */
 	private void updateSkyNet() {
 		
+		// perceptSize says the distance in which the agent can see
 		int viewDistance = getPerceptSize();
+		// load information about the map around the agent 
 		net = percept();
 		
+		// save loaded information into skyNet
 		for (int x = -viewDistance; x <= viewDistance; x++) {
 			for (int y = -viewDistance; y <= viewDistance; y++) {
 				skyNet[activeState.x + x][activeState.y + y] = net[viewDistance + x][viewDistance + y];
