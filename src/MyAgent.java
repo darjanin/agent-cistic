@@ -71,9 +71,13 @@ public  class MyAgent extends Agent{
 		open.add(activeState);
 		
 		while(!open.isEmpty()) {
+			p("======================================");
+			p("OPEN " + open);
+			p("CLOSE " + close);
 			state = open.pop();
 			
 			if (!close.contains(state)) {
+				close.add(state);
 				
 				// if agent stands on DIRTY or UNKNOWN square, generate path to it from active state
 				if (skyNet[state.x][state.y] == DIRTY || skyNet[state.x][state.y] == UNKNOWN) {
@@ -122,6 +126,11 @@ public  class MyAgent extends Agent{
 					open.add(newState);
 				
 			}
+			
+			
+			p("OPEN " + open);
+			p("CLOSE " + close);
+			p("======================================");
 		}
 		
 		// halt if no target has been found
@@ -164,18 +173,32 @@ public  class MyAgent extends Agent{
 			suck();
 		}
 		
+		updateSkyNet();
+		
 		// if there is some order in path than poll last and execute it
 		// return at the end and execute next order in new act call
 		if (path.size() > 0) {
 			p("||| MOVING: " + path);
 			switch (path.pollLast()) {
 			case "f":
-				moveFW();
-				// update position based on the agent's orientation
-				if (activeState.orientation == World.NORTH) activeState.x--;
-				if (activeState.orientation == World.SOUTH) activeState.x++;
-				if (activeState.orientation == World.WEST) activeState.y--;
-				if (activeState.orientation == World.EAST) activeState.y++;
+				boolean allowMove = false;
+				if (activeState.orientation == World.NORTH && skyNet[activeState.x-1][activeState.y] != WALL)
+					allowMove = true;
+				if (activeState.orientation == World.SOUTH && skyNet[activeState.x+1][activeState.y] != WALL)
+					allowMove = true;
+				if (activeState.orientation == World.WEST && skyNet[activeState.x][activeState.y-1] != WALL)
+					allowMove = true;
+				if (activeState.orientation == World.EAST && skyNet[activeState.x][activeState.y+1] != WALL)
+					allowMove = true;
+				
+				if (allowMove) {
+					moveFW();
+					// update position based on the agent's orientation
+					if (activeState.orientation == World.NORTH) activeState.x -= 1;
+					if (activeState.orientation == World.SOUTH) activeState.x += 1;
+					if (activeState.orientation == World.WEST) activeState.y -= 1;
+					if (activeState.orientation == World.EAST) activeState.y += 1;
+				}
 				break;
 			case "l":
 				turnLEFT();
@@ -183,7 +206,7 @@ public  class MyAgent extends Agent{
 				if (activeState.orientation == World.NORTH)
 					activeState.orientation = World.WEST;
 				else
-					activeState.orientation--;
+					activeState.orientation -= 1;
 				break;
 			case "r":
 				turnRIGHT();
@@ -191,15 +214,13 @@ public  class MyAgent extends Agent{
 				if (activeState.orientation == World.WEST)
 					activeState.orientation = World.NORTH;
 				else
-					activeState.orientation++;
+					activeState.orientation += 1;
 				break;
 			default:
 				break;
 			}
 			return;
 		}
-		
-		updateSkyNet();
 		
 		if (!findTarge()) {
 			p("HALTED");
