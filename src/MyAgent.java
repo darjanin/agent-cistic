@@ -3,77 +3,162 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 public  class MyAgent extends Agent{	
-	int[][] net;
+	int[][] net, oldNet;
 	LinkedList<State> open = new LinkedList<State>();
 	HashSet<State> close = new HashSet<State>();
-	LinkedList<String> path;
+	LinkedList<String> path = new LinkedList<String>();
+	LinkedList<String> lastPath = new LinkedList<String>();
 	
-	int[] start = {20,20};
-	int[] finish = {20,17};
+	// skyNet is my map where would be done pathfinding
+	int[][] skyNet;
+	int height, width;
+	State lastUsedState;
 	
-	int statesCount = 0;
+	boolean destroyThem = false;
+	boolean newLife = false;
+	boolean firstRun = false;
+	
+	static final int UNKNOWN = 3;
 		
 	public MyAgent(int height, int width) {
-		
+		// initialize the skyNet with dimension 4 times larger than input map with UNKNOWN squares
+		this.height = height*4+1;
+		this.width = width*4+1;
+		skyNet = new int[this.height][this.width];
+		for (int i = 0; i < this.height; i++) {
+			for (int j = 0; j < this.width; j++) {
+				skyNet[i][j] = UNKNOWN;
+			}
+		}
 	}
 
-	public void act(){			
-		/* ZACIATOK MIESTA PRE VAS KOD */
-		
-		net = percept();	// aktualny percept
-					// zadefinovane su konstanty CLEAN=0, DIRTY=1, WALL=2)
-
-		State tmpState, newState;
-		open.add(new State(start[0], start[1], getOrientation(), null));
-		while (!open.isEmpty()) {
-			tmpState = open.pop();
-
-			statesCount++;
-			if (tmpState.checkPosition(finish[0], finish[1])) {
-				path = tmpState.path();
+	
+	private void skyNetMap() {
+		for (int i = 0; i < this.height; i++) {
+			for (int j = 0; j < this.width; j++) {
+				System.out.print(skyNet[i][j]);
 			}
-			if (!close.contains(tmpState)) {
-				close.add(tmpState);
+			System.out.println("");
+		}
+	}
+	
+	private void p(String msg) {
+		System.out.println(msg);
+	}
+	
+	public void act(){			
+		
+		
+		State state, newState;
+		if (!firstRun) {
+			open.add(new State(height/2, width/2, getOrientation(), null));
+			lastUsedState = open.get(0);
+			destroyThem = true;
+			firstRun = true;
+		}
+//		else
+//			open.addFirst(lastUsedState);
+//		if (newLife) {
+//			open = new LinkedList<State>();
+//			open.add(lastUsedState);
+//		}
+		
+		if (skyNet[lastUsedState.x][lastUsedState.y] == DIRTY) {
+			p("DIRTY OUT");
+			destroyThem = true;
+		}
+		
+		if (skyNet[lastUsedState.x-1][lastUsedState.y] == DIRTY)
+			open.addFirst(new State(lastUsedState.x-1, lastUsedState.y, lastUsedState.orientation, lastUsedState));
+		else if (skyNet[lastUsedState.x+1][lastUsedState.y] == DIRTY)
+			open.addFirst(new State(lastUsedState.x+1, lastUsedState.y, lastUsedState.orientation, lastUsedState));
+		else if (skyNet[lastUsedState.x][lastUsedState.y-1] == DIRTY)
+			open.addFirst(new State(lastUsedState.x, lastUsedState.y-1, lastUsedState.orientation, lastUsedState));
+		else if (skyNet[lastUsedState.x][lastUsedState.y] == DIRTY)
+			open.addFirst(new State(lastUsedState.x, lastUsedState.y+1, lastUsedState.orientation, lastUsedState));
+		
+		while (!open.isEmpty() && !destroyThem) {
+//			p("OPEN: " + open.size());
+//			p("OPEN CONTENT: " + open);
+//			p("CLOSE: " + close.size());
+//			p("CLOSE CONTENT: " + close);
 			
-				switch (tmpState.orientation) {
+			state = open.pop();
+//			p("POP: " + state);
+			
+//			System.out.println(state.x + "x" + state.y);
+			
+			if (!close.contains(state)) {
+				if (skyNet[state.x][state.y] == DIRTY) {
+					p("DIRTY");
+					lastUsedState = state;
+					destroyThem = true;
+					path = state.path();
+					break;
+				}
+				
+//				if (skyNet[state.x-1][state.y] == DIRTY)
+//					open.addFirst(new State(state.x-1, state.y, state.orientation, lastUsedState));
+//				if (skyNet[state.x+1][state.y] == DIRTY)
+//					open.addFirst(new State(state.x+1, state.y, state.orientation, lastUsedState));
+//				if (skyNet[state.x][state.y-1] == DIRTY)
+//					open.addFirst(new State(state.x, state.y-1, state.orientation, lastUsedState));
+//				if (skyNet[state.x][state.y] == DIRTY)
+//					open.addFirst(new State(state.x, state.y+1, state.orientation, lastUsedState));
+				
+				if (skyNet[state.x][state.y] == UNKNOWN) {
+					if (skyNet[state.x][state.y] == UNKNOWN) p("UNKNOWN");
+					lastUsedState = state;
+					destroyThem = true;
+					path = state.path();
+					break;
+				}
+				
+				close.add(state);
+			
+				switch (state.orientation) {
 				case World.NORTH:
-					newState = new State(tmpState.x - 1, tmpState.y, tmpState.orientation, tmpState);
+					newState = new State(state.x - 1, state.y, state.orientation, state);
 					break;
 				case World.SOUTH:
-					newState = new State(tmpState.x + 1, tmpState.y, tmpState.orientation, tmpState);
+					newState = new State(state.x + 1, state.y, state.orientation, state);
 					break;
 				case World.WEST:
-					newState = new State(tmpState.x, tmpState.y - 1, tmpState.orientation, tmpState);
+					newState = new State(state.x, state.y - 1, state.orientation, state);
 					break;
 				case World.EAST:
-					newState = new State(tmpState.x, tmpState.y + 1, tmpState.orientation, tmpState);
+					newState = new State(state.x, state.y + 1, state.orientation, state);
 					break;
 				default:
 					newState = null;
 				}
 				
-				if (!close.contains(newState) && net[newState.x][newState.y] != WALL && net[newState.x][newState.y] != net[tmpState.x][tmpState.y]) {
+				if (!close.contains(newState) && skyNet[newState.x][newState.y] != WALL) {
 					open.add(newState);
 				}
 				
-				if (tmpState.orientation == World.NORTH)
-					newState = new State(tmpState.x, tmpState.y, World.WEST , tmpState);
+				// rotate to left
+				if (state.orientation == World.NORTH)
+					newState = new State(state.x, state.y, World.WEST , state);
 				else
-					newState = new State(tmpState.x, tmpState.y, tmpState.orientation - 1, tmpState);
+					newState = new State(state.x, state.y, state.orientation - 1, state);
 				if (!close.contains(newState))
 					open.add(newState);
 				
-				if (tmpState.orientation == World.WEST)
-					newState = new State(tmpState.x, tmpState.y, World.NORTH, tmpState);
+				// rotate to the right
+				if (state.orientation == World.WEST)
+					newState = new State(state.x, state.y, World.NORTH, state);
 				else
-					newState = new State(tmpState.x, tmpState.y, tmpState.orientation + 1, tmpState);
+					newState = new State(state.x, state.y, state.orientation + 1, state);
 				if (!close.contains(newState))
 					open.add(newState);
 				
+//				lastUsedState = state;
 			}
 		}
 		
 		if (path.size() > 0) {
+			p("MOVING: " + path);
 			switch (path.pollLast()) {
 			case "f":
 				moveFW();
@@ -88,22 +173,46 @@ public  class MyAgent extends Agent{
 				break;
 			}
 		} else {
-			halt();
+			p("SUCK");
+			suck();
+			destroyThem = false;
+			
+			net = percept();	// aktualny percept
+			// zadefinovane su konstanty CLEAN=0, DIRTY=1, WALL=2)
+				
+			
+			p("LAST USED STATE: " + lastUsedState);
+			
+			skyNet[lastUsedState.x-1][lastUsedState.y-1] = net[getPerceptSize() - 1][getPerceptSize() - 1];
+			skyNet[lastUsedState.x-1][lastUsedState.y] 	 = net[getPerceptSize() - 1][getPerceptSize() + 0];
+			skyNet[lastUsedState.x-1][lastUsedState.y+1] = net[getPerceptSize() - 1][getPerceptSize() + 1];
+			skyNet[lastUsedState.x][lastUsedState.y-1]   = net[getPerceptSize() + 0][getPerceptSize() - 1];
+			skyNet[lastUsedState.x][lastUsedState.y]     = net[getPerceptSize() + 0][getPerceptSize() + 0];
+			skyNet[lastUsedState.x][lastUsedState.y+1] 	 = net[getPerceptSize() + 0][getPerceptSize() + 1];
+			skyNet[lastUsedState.x+1][lastUsedState.y-1] = net[getPerceptSize() + 1][getPerceptSize() - 1];
+			skyNet[lastUsedState.x+1][lastUsedState.y] 	 = net[getPerceptSize() + 1][getPerceptSize() + 0];
+			skyNet[lastUsedState.x+1][lastUsedState.y+1] = net[getPerceptSize() + 1][getPerceptSize() + 1];
+			
+			skyNetMap();
+			
+//			halt();
 		}
 		
 		
-		/* KONIEC MIESTA PRE VAS KOD */
+		
 	}
 	
 	class State {
 		int x, y, orientation;
 		State prev;
+		boolean ends;
 		
 		public State(int x, int y, int orientation, State prev) {
 			this.x = x;
 			this.y = y;
 			this.orientation = orientation;
 			this.prev = prev;
+			this.ends = false;
 		}
 		
 		public boolean checkPosition(int x, int y) {
@@ -111,16 +220,19 @@ public  class MyAgent extends Agent{
 		}
 		
 		public LinkedList<String> path() {
+			p("Generate path");
 			LinkedList<String> out = new LinkedList<String>();
-			State s = prev;
+			State tmpState;
+			State state = prev;
 			int oldOrientation = orientation;
-			while (s != null) {
-				if (oldOrientation != s.orientation) {
-					if (oldOrientation == World.NORTH && s.orientation == World.WEST) {
+			while (state != null) {
+//				if (state == lastUsedState) break;
+				if (oldOrientation != state.orientation) {
+					if (oldOrientation == World.NORTH && state.orientation == World.WEST) {
 						out.add("r");
-					} else if (oldOrientation == World.WEST && s.orientation == World.NORTH) {
+					} else if (oldOrientation == World.WEST && state.orientation == World.NORTH) {
 						out.add("l");
-					} else if (oldOrientation > s.orientation) {
+					} else if (oldOrientation > state.orientation) {
 						out.add("r");
 					} else {
 						out.add("l");
@@ -128,10 +240,23 @@ public  class MyAgent extends Agent{
 				} else {
 					out.add("f");
 				}
-				oldOrientation = s.orientation;
-				s = s.prev;
+				
+				oldOrientation = state.orientation;
+				tmpState = state.prev;
+//				state.prev = null;
+				state = tmpState;
 			}
+//			prev = null;
+			ends = true;
+//			for (int i = 0; i < lastPath.size(); i++)
+//				out.remove(0);
+			p("PATH: " + out);
 			return out;
+		}
+		
+		@Override
+		public String toString() {
+			return "[" + x + "," + y + "] <" + orientation + ">";
 		}
 		
 		@Override
@@ -144,7 +269,7 @@ public  class MyAgent extends Agent{
 			return this.hashCode() == obj.hashCode();
 		}
 		
-		
 	}
+	
 		
 }
