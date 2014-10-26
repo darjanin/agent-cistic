@@ -5,7 +5,7 @@ public  class MyAgent extends Agent{
 	int[][] net;
 	LinkedList<String> path = new LinkedList<String>();
 	
-	// skyNet is my map where would be done path-finding
+	// skyNet is my map where would be done path-finding to DIRTY or UNKNOWN squares
 	int[][] skyNet;
 	// height and width of the skyNet
 	int height, width;
@@ -138,6 +138,7 @@ public  class MyAgent extends Agent{
 		if (path.size() > 0) {
 			switch (path.pollLast()) {
 			case "f":
+				// if action is forward
 				boolean allowMove = false;
 				if (activeState.orientation == World.NORTH && skyNet[activeState.x-1][activeState.y] != WALL)
 					allowMove = true;
@@ -158,6 +159,7 @@ public  class MyAgent extends Agent{
 				}
 				break;
 			case "l":
+				// if action is left
 				turnLEFT();
 				// update orientation based on the agent's turn
 				if (activeState.orientation == World.NORTH)
@@ -166,6 +168,7 @@ public  class MyAgent extends Agent{
 					activeState.orientation -= 1;
 				break;
 			case "r":
+				// if action is right
 				turnRIGHT();
 				// update orientation based on the agent's turn
 				if (activeState.orientation == World.WEST)
@@ -179,13 +182,20 @@ public  class MyAgent extends Agent{
 			return;
 		}
 		
+		// call findTarget function, if it returns false then it means that there are no more DIRTY
+		// to clean, so halt
 		if (!findTarget()) {
 			halt();
 		}
 		
 	}
 	
-	class State {
+	/**
+	 * State class with information about position and orientation
+	 * It saves previous state so the path can be reproduced
+	 *
+	 */
+	private class State {
 		int x, y, orientation;
 		State prev;
 		
@@ -196,10 +206,10 @@ public  class MyAgent extends Agent{
 			this.prev = prev;
 		}
 		
-		public boolean checkPosition(int x, int y) {
-			return (this.x == x && this.y == y) ? true : false;
-		}
-		
+		/**
+		 * Returns actions that will be used to navigate the agent
+		 * @return path with first action on last position
+		 */
 		public LinkedList<String> path() {
 			LinkedList<String> out = new LinkedList<String>();
 			State state = prev;
