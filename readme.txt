@@ -3,7 +3,7 @@ Author: Milan Darjanin <me@milandarjanin.com>
 
 ## Goal
 
-The goal of the agent (vacuum) is to clean or dirty squares on the map. 
+The goal of the agent (vacuum) is to clean dirty squares on the map. 
 
 ## Idea
 
