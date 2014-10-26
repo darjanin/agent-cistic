@@ -5,10 +5,6 @@ Author: Milan Darjanin <me@milandarjanin.com>
 
 The goal of the agent (vacuum) is to clean dirty squares on the map. 
 
-## Idea
-
-There are few steps that are followed by the agent to achieve his goal.
-
 ### Initialization
 
 The first step is to create own map (SKYNET) for the agent in which will be stored data for searching new targets.
